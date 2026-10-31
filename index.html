@@ -72,6 +72,28 @@
             font-size: 14px;
         }
         
+        .live-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #2ecc71;
+            border-radius: 50%;
+            margin-right: 5px;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 8px rgba(46, 204, 113, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+            }
+        }
+        
         .logout-btn {
             background: #ff4757;
             color: white;
@@ -519,6 +541,44 @@
             padding: 40px;
             color: #999;
         }
+        
+        .chart-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0, 212, 255, 0.05);
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            border-radius: 15px;
+        }
+        
+        .mini-chart {
+            height: 150px;
+            position: relative;
+            margin: 10px 0;
+            background: rgba(0, 212, 255, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .chart-bar {
+            display: inline-block;
+            width: 4%;
+            height: 100%;
+            background: linear-gradient(180deg, #00d4ff, #0099ff);
+            margin: 0 0.5%;
+            vertical-align: bottom;
+            border-radius: 3px;
+        }
+        
+        .price-chart {
+            width: 100%;
+            height: 200px;
+            position: relative;
+        }
+        
+        canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
     </style>
 </head>
 <body>
@@ -532,7 +592,10 @@
         <div class="nav-info">
             <span class="credits">💰 ₹<span id="userCredits">0</span></span>
             <span style="color: #999;">|</span>
+            <span style="color: #00d4ff;"><span class="live-indicator"></span>Live</span>
+            <span style="color: #999;">|</span>
             <span style="color: #fff;">Hello, <span id="userName">User</span></span>
+            <button class="logout-btn" style="background: #2ecc71; margin-right: 10px;" onclick="saveAccount()">💾 Save</button>
             <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
     </div>
@@ -543,12 +606,19 @@
             <p id="authSubtitle">Stock Market Simulator</p>
             
             <div id="loginForm">
-                <p style="background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; text-align: center; margin-bottom: 20px;">Enter your name to get started</p>
+                <p style="background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; text-align: center; margin-bottom: 20px;">Enter your name & password to login or create new account</p>
                 <div class="form-group">
-                    <label>Your Name</label>
-                    <input type="text" id="loginName" placeholder="Enter your name">
+                    <label>Username</label>
+                    <input type="text" id="loginName" placeholder="Enter your username">
                 </div>
-                <button class="btn-primary" onclick="login()">Start Trading</button>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password">
+                </div>
+                <button class="btn-primary" onclick="login()">Login / Create Account</button>
+                <div class="toggle-auth" style="margin-top: 15px; text-align: center;">
+                    <span style="color: #666; font-size: 12px;">First time? Create new account with your username & password</span>
+                </div>
             </div>
         </div>
     </div>
@@ -604,6 +674,102 @@
         let portfolio = {};
         let selectedCompany = null;
         let tradeType = 'buy';
+        let priceHistory = {}; // For charts
+        let priceUpdateInterval = null; // For live updates
+        
+        // Initialize price history for all companies
+        function initPriceHistory() {
+            companies.forEach(comp => {
+                if (!priceHistory[comp.symbol]) {
+                    priceHistory[comp.symbol] = [comp.price];
+                }
+            });
+        }
+        
+        // Update prices in real-time
+        function updatePrices() {
+            companies.forEach(comp => {
+                // Random price change: -2% to +2%
+                const changePercent = (Math.random() - 0.5) * 4;
+                const priceChange = comp.price * (changePercent / 100);
+                comp.price = Math.max(comp.price + priceChange, 1); // Minimum price: ₹1
+                
+                // Update price change percentage
+                comp.change = changePercent;
+                
+                // Track price history
+                if (priceHistory[comp.symbol]) {
+                    priceHistory[comp.symbol].push(comp.price);
+                    // Keep only last 50 data points for performance
+                    if (priceHistory[comp.symbol].length > 50) {
+                        priceHistory[comp.symbol].shift();
+                    }
+                }
+            });
+            
+            // Update UI if on companies page
+            const companiesPage = document.getElementById('companiesPage');
+            if (companiesPage && companiesPage.classList.contains('active')) {
+                renderCompanies();
+            }
+            
+            // Update modal price if trading
+            if (selectedCompany) {
+                const comp = companies.find(c => c.symbol === selectedCompany.symbol);
+                if (comp) {
+                    document.getElementById('modalPrice').textContent = comp.price.toFixed(2);
+                    document.getElementById('modalChange').textContent = comp.change.toFixed(1);
+                    updateModalTotal();
+                }
+            }
+        }
+        
+        // Start price updates every 3 seconds
+        function startPriceUpdates() {
+            if (!priceUpdateInterval) {
+                priceUpdateInterval = setInterval(updatePrices, 3000);
+            }
+        }
+        
+        // Stop price updates
+        function stopPriceUpdates() {
+            if (priceUpdateInterval) {
+                clearInterval(priceUpdateInterval);
+                priceUpdateInterval = null;
+            }
+        }
+        
+        // Save account to localStorage
+        function saveAccount() {
+            if (user) {
+                const accountData = {
+                    user: user,
+                    portfolio: portfolio,
+                    priceHistory: priceHistory,
+                    timestamp: new Date().toISOString()
+                };
+                localStorage.setItem('saveAndParesAccount_' + user.username, JSON.stringify(accountData));
+                alert('✅ Account saved successfully!');
+            }
+        }
+        
+        // Load account from localStorage
+        function loadAccount(username, password) {
+            const accountData = localStorage.getItem('saveAndParesAccount_' + username);
+            if (accountData) {
+                const data = JSON.parse(accountData);
+                if (data.user.password === password) {
+                    user = data.user;
+                    portfolio = data.portfolio;
+                    priceHistory = data.priceHistory;
+                    return true;
+                } else {
+                    alert('❌ Incorrect password!');
+                    return false;
+                }
+            }
+            return false;
+        }
         
         // Real Indian stock prices (as of latest data)
         const companies = [
@@ -649,30 +815,58 @@
         ];
         
         function login() {
-            const name = document.getElementById('loginName').value;
-            if (name && name.trim()) {
-                user = { name: name.trim(), credits: 1000 };
+            const username = document.getElementById('loginName').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                alert('Please enter both username and password');
+                return;
+            }
+            
+            // Try to load existing account
+            if (loadAccount(username, password)) {
+                document.getElementById('userName').textContent = user.username;
+                document.getElementById('userCredits').textContent = user.credits.toFixed(0);
                 loginSuccess();
             } else {
-                alert('Please enter your name');
+                // Create new account
+                if (loadAccount(username, password) === false && localStorage.getItem('saveAndParesAccount_' + username)) {
+                    // Account exists but wrong password
+                    return;
+                }
+                // New account
+                user = { 
+                    username: username, 
+                    password: password, 
+                    credits: 1000,
+                    createdDate: new Date().toISOString()
+                };
+                initPriceHistory();
+                saveAccount();
+                document.getElementById('userName').textContent = user.username;
+                document.getElementById('userCredits').textContent = user.credits.toFixed(0);
+                loginSuccess();
             }
         }
         
         function loginSuccess() {
             document.getElementById('authContainer').style.display = 'none';
             document.getElementById('navbar').style.display = 'flex';
-            document.getElementById('userName').textContent = user.name;
-            document.getElementById('userCredits').textContent = user.credits;
+            document.getElementById('userName').textContent = user.username;
+            document.getElementById('userCredits').textContent = user.credits.toFixed(0);
+            startPriceUpdates(); // Start live price updates
             showPage('dashboard');
         }
         
         function logout() {
             user = null;
             portfolio = {};
+            stopPriceUpdates(); // Stop price updates
             document.getElementById('authContainer').style.display = 'flex';
             document.getElementById('navbar').style.display = 'none';
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('loginName').value = '';
+            document.getElementById('loginPassword').value = '';
         }
         
         function showPage(page) {
@@ -741,6 +935,11 @@
                 </div>
             `;
             document.getElementById('companiesPage').innerHTML = html;
+            
+            // Draw charts after rendering
+            setTimeout(() => {
+                companies.forEach(c => drawMiniChart(c.symbol));
+            }, 100);
         }
         
         function renderPortfolio() {
@@ -816,9 +1015,48 @@
                             <div class="footer-value" style="color: ${company.change >= 0 ? '#2ecc71' : '#e74c3c'};">${company.change >= 0 ? '+' : ''}${company.change.toFixed(1)}%</div>
                         </div>
                     </div>
+                    <div style="height: 60px; margin: 10px 0; position: relative; background: rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden;">
+                        <canvas id="chart_${company.symbol}" style="width: 100%; height: 100%;"></canvas>
+                    </div>
                     <button class="invest-btn" onclick="openTrading('${company.symbol}', ${company.price}, ${company.change})">Trade</button>
                 </div>
             `;
+        }
+        
+        function drawMiniChart(symbol) {
+            const canvas = document.getElementById('chart_' + symbol);
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const history = priceHistory[symbol] || [];
+            
+            if (history.length < 2) return;
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            const minPrice = Math.min(...history);
+            const maxPrice = Math.max(...history);
+            const range = maxPrice - minPrice || 1;
+            
+            ctx.clearRect(0, 0, width, height);
+            ctx.strokeStyle = '#00d4ff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            history.forEach((price, i) => {
+                const x = (i / (history.length - 1)) * width;
+                const y = height - ((price - minPrice) / range) * height;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            
+            ctx.stroke();
+            
+            // Fill area under chart
+            ctx.fillStyle = 'rgba(0, 212, 255, 0.2)';
+            ctx.lineTo(width, height);
+            ctx.lineTo(0, height);
+            ctx.fill();
         }
         
         function openTrading(symbol, price, change) {
@@ -907,6 +1145,15 @@
                 
                 alert('✅ Successfully sold ' + shares + ' shares of ' + selectedCompany.symbol + ' for ₹' + cost.toFixed(0));
             }
+            
+            // Update price history
+            const comp = companies.find(c => c.symbol === selectedCompany.symbol);
+            if (comp && priceHistory[selectedCompany.symbol]) {
+                priceHistory[selectedCompany.symbol].push(comp.price);
+            }
+            
+            // Save account automatically
+            saveAccount();
             
             document.getElementById('userCredits').textContent = user.credits.toFixed(0);
             closeTradingModal();
