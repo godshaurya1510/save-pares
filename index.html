@@ -426,7 +426,8 @@
         }
         
         #chartModal .modal-content {
-            max-width: 900px;
+            max-width: 1200px;
+            width: 95%;
         }
         
         @media (max-width: 768px) {
@@ -434,6 +435,34 @@
                 max-width: 95%;
                 padding: 20px;
             }
+        }
+        
+        .chart-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        .chart-stat-item {
+            background: rgba(0, 212, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid rgba(0, 212, 255, 0.3);
+            text-align: center;
+        }
+        
+        .chart-stat-item .label {
+            color: #999;
+            font-size: 11px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .chart-stat-item .value {
+            color: #00d4ff;
+            font-size: 18px;
+            font-weight: bold;
         }
         
         .modal-header {
@@ -752,30 +781,53 @@
     
     <!-- BIG CHART MODAL -->
     <div id="chartModal" class="modal">
-        <div class="modal-content" style="max-width: 900px; width: 95%;">
+        <div class="modal-content">
             <div class="modal-header">
-                <div id="chartTitle" class="modal-title">Stock Price Chart</div>
+                <div>
+                    <div id="chartTitle" class="modal-title">Stock Price Chart</div>
+                    <div style="color: #999; font-size: 14px; margin-top: 5px;">Real-time candlestick chart with support & resistance</div>
+                </div>
                 <button class="close-btn" onclick="closeChartModal()">×</button>
             </div>
-            <div style="position: relative; height: 400px; background: rgba(0, 212, 255, 0.05); border-radius: 15px; padding: 20px;">
+            
+            <!-- BIG CHART AREA (500px height) -->
+            <div style="position: relative; height: 500px; background: linear-gradient(135deg, rgba(0,20,40,0.9) 0%, rgba(0,30,60,0.9) 100%); border-radius: 15px; padding: 20px; margin-bottom: 20px; border: 2px solid rgba(0, 212, 255, 0.2);">
                 <canvas id="bigChart" style="width: 100%; height: 100%;"></canvas>
             </div>
-            <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; text-align: center;">
-                <div style="background: rgba(0, 212, 255, 0.1); padding: 15px; border-radius: 10px;">
-                    <div style="color: #999; font-size: 12px; margin-bottom: 5px;">CURRENT PRICE</div>
-                    <div style="color: #00d4ff; font-size: 20px; font-weight: bold;">₹<span id="chartCurrentPrice">0</span></div>
+            
+            <!-- STATS GRID -->
+            <div class="chart-stats-grid">
+                <div class="chart-stat-item">
+                    <div class="label">Current Price</div>
+                    <div class="value">₹<span id="chartCurrentPrice">0.00</span></div>
                 </div>
-                <div style="background: rgba(0, 212, 255, 0.1); padding: 15px; border-radius: 10px;">
-                    <div style="color: #999; font-size: 12px; margin-bottom: 5px;">HIGH (Today)</div>
-                    <div style="color: #2ecc71; font-size: 20px; font-weight: bold;">₹<span id="chartHigh">0</span></div>
+                <div class="chart-stat-item">
+                    <div class="label">24h High</div>
+                    <div class="value" style="color: #2ecc71;">₹<span id="chartHigh">0.00</span></div>
                 </div>
-                <div style="background: rgba(0, 212, 255, 0.1); padding: 15px; border-radius: 10px;">
-                    <div style="color: #999; font-size: 12px; margin-bottom: 5px;">LOW (Today)</div>
-                    <div style="color: #e74c3c; font-size: 20px; font-weight: bold;">₹<span id="chartLow">0</span></div>
+                <div class="chart-stat-item">
+                    <div class="label">24h Low</div>
+                    <div class="value" style="color: #e74c3c;">₹<span id="chartLow">0.00</span></div>
                 </div>
-                <div style="background: rgba(0, 212, 255, 0.1); padding: 15px; border-radius: 10px;">
-                    <div style="color: #999; font-size: 12px; margin-bottom: 5px;">CHANGE</div>
-                    <div id="chartChangeDisplay" style="color: #00d4ff; font-size: 20px; font-weight: bold;">+0%</div>
+                <div class="chart-stat-item">
+                    <div class="label">Change</div>
+                    <div class="value" id="chartChangeDisplay" style="color: #00d4ff;">+0.00%</div>
+                </div>
+                <div class="chart-stat-item">
+                    <div class="label">Volume</div>
+                    <div class="value" style="color: #f39c12;">1000K</div>
+                </div>
+                <div class="chart-stat-item">
+                    <div class="label">Resistance</div>
+                    <div class="value" style="color: #00d4ff;">₹<span id="chartResistance">0.00</span></div>
+                </div>
+                <div class="chart-stat-item">
+                    <div class="label">Support</div>
+                    <div class="value" style="color: #FFD700;">₹<span id="chartSupport">0.00</span></div>
+                </div>
+                <div class="chart-stat-item">
+                    <div class="label">Status</div>
+                    <div class="value" style="color: #2ecc71;"><span class="live-indicator"></span>Live</div>
                 </div>
             </div>
         </div>
@@ -1297,7 +1349,7 @@
                             <div class="company-sector">Stock</div>
                         </div>
                         <div class="price-change ${company.change >= 0 ? 'positive' : 'negative'}">
-                            ${company.change >= 0 ? '↑' : '↓'} ${Math.abs(company.change).toFixed(1)}%
+                            ${company.change >= 0 ? '↑' : '↓'} ${Math.abs(company.change).toFixed(2)}%
                         </div>
                     </div>
                     <div class="company-name">${company.name}</div>
@@ -1308,7 +1360,7 @@
                         </div>
                         <div class="footer-item">
                             <div class="footer-label">1D Change</div>
-                            <div class="footer-value" style="color: ${company.change >= 0 ? '#2ecc71' : '#e74c3c'};">${company.change >= 0 ? '+' : ''}${company.change.toFixed(1)}%</div>
+                            <div class="footer-value" style="color: ${company.change >= 0 ? '#2ecc71' : '#e74c3c'};">${company.change >= 0 ? '+' : ''}${company.change.toFixed(2)}%</div>
                         </div>
                     </div>
                     <div style="height: 80px; margin: 10px 0; position: relative; background: rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden; cursor: pointer;" onclick="openBigChart('${company.symbol}')">
@@ -1338,24 +1390,66 @@
             const range = maxPrice - minPrice || 1;
             
             ctx.clearRect(0, 0, width, height);
-            ctx.strokeStyle = '#00d4ff';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
             
-            history.forEach((price, i) => {
-                const x = (i / (history.length - 1)) * width;
-                const y = height - ((price - minPrice) / range) * height;
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            });
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, height);
+            gradient.addColorStop(0, 'rgba(0, 50, 100, 0.3)');
+            gradient.addColorStop(1, 'rgba(0, 20, 40, 0.5)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
             
-            ctx.stroke();
+            // Draw mini candlesticks
+            const candleWidth = width / (history.length + 1);
+            const candleBodyWidth = Math.max(candleWidth * 0.4, 2);
             
-            // Fill area under chart
-            ctx.fillStyle = 'rgba(0, 212, 255, 0.2)';
-            ctx.lineTo(width, height);
-            ctx.lineTo(0, height);
-            ctx.fill();
+            for (let i = 0; i < history.length; i++) {
+                const x = (i + 1) * candleWidth;
+                const currentPrice = history[i];
+                const prevPrice = i > 0 ? history[i - 1] : currentPrice;
+                
+                // Candlestick Y positions
+                const highPrice = Math.max(currentPrice, prevPrice);
+                const lowPrice = Math.min(currentPrice, prevPrice);
+                
+                const highY = height - ((highPrice - minPrice) / range) * height;
+                const lowY = height - ((lowPrice - minPrice) / range) * height;
+                const openY = height - ((prevPrice - minPrice) / range) * height;
+                const closeY = height - ((currentPrice - minPrice) / range) * height;
+                
+                // Color based on movement
+                const isUp = currentPrice >= prevPrice;
+                const wickColor = isUp ? '#27ae60' : '#c0392b';
+                const bodyColor = isUp ? '#2ecc71' : '#e74c3c';
+                
+                // Draw wick
+                ctx.strokeStyle = wickColor;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x, highY);
+                ctx.lineTo(x, lowY);
+                ctx.stroke();
+                
+                // Draw body with gradient
+                const bodyTop = Math.min(openY, closeY);
+                const bodyHeight = Math.abs(closeY - openY) || 1;
+                
+                const bodyGradient = ctx.createLinearGradient(0, bodyTop, 0, bodyTop + bodyHeight);
+                if (isUp) {
+                    bodyGradient.addColorStop(0, '#2ecc71');
+                    bodyGradient.addColorStop(1, '#27ae60');
+                } else {
+                    bodyGradient.addColorStop(0, '#e74c3c');
+                    bodyGradient.addColorStop(1, '#c0392b');
+                }
+                
+                ctx.fillStyle = bodyGradient;
+                ctx.fillRect(x - candleBodyWidth / 2, bodyTop, candleBodyWidth, bodyHeight);
+                
+                // Border
+                ctx.strokeStyle = isUp ? '#1abc9c' : '#e67e22';
+                ctx.lineWidth = 0.5;
+                ctx.strokeRect(x - candleBodyWidth / 2, bodyTop, candleBodyWidth, bodyHeight);
+            }
         }
         
         function openBigChart(symbol) {
@@ -1368,9 +1462,14 @@
             const history = priceHistory[symbol] || [];
             const high = history.length > 0 ? Math.max(...history) : comp.price;
             const low = history.length > 0 ? Math.min(...history) : comp.price;
+            const range = high - low || 1;
+            const support = low + (range * 0.2);
+            const resistance = high - (range * 0.2);
             
             document.getElementById('chartHigh').textContent = high.toFixed(2);
             document.getElementById('chartLow').textContent = low.toFixed(2);
+            document.getElementById('chartSupport').textContent = support.toFixed(2);
+            document.getElementById('chartResistance').textContent = resistance.toFixed(2);
             
             const changeDisplay = document.getElementById('chartChangeDisplay');
             changeDisplay.textContent = (comp.change >= 0 ? '+' : '') + comp.change.toFixed(2) + '%';
@@ -1406,29 +1505,34 @@
             const minPrice = Math.min(...history);
             const maxPrice = Math.max(...history);
             const range = maxPrice - minPrice || 1;
-            const padding = 40;
-            const chartHeight = height - padding;
+            const padding = 60;
+            const chartHeight = height - padding * 1.5;
             
             ctx.clearRect(0, 0, width, height);
-            ctx.fillStyle = '#1a1a2e';
+            
+            // Dark gradient background
+            const gradient = ctx.createLinearGradient(0, 0, 0, height);
+            gradient.addColorStop(0, 'rgba(0, 20, 40, 0.95)');
+            gradient.addColorStop(1, 'rgba(0, 30, 60, 0.95)');
+            ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, width, height);
             
-            // Draw grid lines
-            ctx.strokeStyle = 'rgba(0, 212, 255, 0.1)';
+            // Draw grid lines with labels
+            ctx.strokeStyle = 'rgba(0, 212, 255, 0.15)';
             ctx.lineWidth = 1;
             for (let i = 0; i <= 5; i++) {
                 const y = padding + (i / 5) * (chartHeight - padding);
                 ctx.beginPath();
                 ctx.moveTo(0, y);
-                ctx.lineTo(width, y);
+                ctx.lineTo(width - 10, y);
                 ctx.stroke();
                 
                 // Price labels on right
                 const price = maxPrice - (i / 5) * range;
-                ctx.fillStyle = '#999';
-                ctx.font = '12px Arial';
+                ctx.fillStyle = '#00d4ff';
+                ctx.font = 'bold 12px Arial';
                 ctx.textAlign = 'right';
-                ctx.fillText('₹' + price.toFixed(2), width - 10, y + 5);
+                ctx.fillText('₹' + price.toFixed(2), width - 15, y + 5);
             }
             
             // Calculate support and resistance
@@ -1437,29 +1541,41 @@
             const supportY = height - padding - ((support - minPrice) / range) * (chartHeight - padding);
             const resistanceY = height - padding - ((resistance - minPrice) / range) * (chartHeight - padding);
             
-            // Draw support line (yellow)
+            // Draw support line (golden/yellow)
             ctx.strokeStyle = '#FFD700';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.setLineDash([5, 5]);
             ctx.beginPath();
             ctx.moveTo(0, supportY);
-            ctx.lineTo(width, supportY);
+            ctx.lineTo(width - 10, supportY);
             ctx.stroke();
             ctx.setLineDash([]);
+            
+            // Draw support label
+            ctx.fillStyle = '#FFD700';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('SUPPORT ₹' + support.toFixed(2), 15, supportY - 8);
             
             // Draw resistance line (cyan)
             ctx.strokeStyle = '#00d4ff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.setLineDash([5, 5]);
             ctx.beginPath();
             ctx.moveTo(0, resistanceY);
-            ctx.lineTo(width, resistanceY);
+            ctx.lineTo(width - 10, resistanceY);
             ctx.stroke();
             ctx.setLineDash([]);
             
-            // Draw candlesticks
+            // Draw resistance label
+            ctx.fillStyle = '#00d4ff';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('RESISTANCE ₹' + resistance.toFixed(2), 15, resistanceY - 8);
+            
+            // Draw candlesticks with beautiful colors
             const candleWidth = (width - padding) / (history.length + 1);
-            const candleBodyWidth = candleWidth * 0.6;
+            const candleBodyWidth = Math.max(candleWidth * 0.5, 3);
             
             for (let i = 0; i < history.length; i++) {
                 const x = padding + (i + 1) * candleWidth;
@@ -1475,62 +1591,95 @@
                 const openY = height - padding - ((prevPrice - minPrice) / range) * (chartHeight - padding);
                 const closeY = height - padding - ((currentPrice - minPrice) / range) * (chartHeight - padding);
                 
-                // Color: green if up, red if down
+                // Determine color based on movement
                 const isUp = currentPrice >= prevPrice;
-                const color = isUp ? '#2ecc71' : '#e74c3c';
+                let bodyColor, wickColor;
                 
-                // Draw wick (high-low line)
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 1;
+                if (isUp) {
+                    // Green gradient for up candle
+                    bodyColor = '#2ecc71';
+                    wickColor = '#27ae60';
+                } else {
+                    // Red gradient for down candle
+                    bodyColor = '#e74c3c';
+                    wickColor = '#c0392b';
+                }
+                
+                // Draw wick (shadow/high-low line) - thicker and colored
+                ctx.strokeStyle = wickColor;
+                ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.moveTo(x, highY);
                 ctx.lineTo(x, lowY);
                 ctx.stroke();
                 
-                // Draw body
-                ctx.fillStyle = color;
+                // Draw candle body with gradient
                 const bodyTop = Math.min(openY, closeY);
-                const bodyHeight = Math.abs(closeY - openY) || 2;
+                const bodyHeight = Math.abs(closeY - openY) || 3;
+                
+                // Create gradient for body
+                const bodyGradient = ctx.createLinearGradient(0, bodyTop, 0, bodyTop + bodyHeight);
+                if (isUp) {
+                    bodyGradient.addColorStop(0, '#2ecc71');
+                    bodyGradient.addColorStop(1, '#27ae60');
+                } else {
+                    bodyGradient.addColorStop(0, '#e74c3c');
+                    bodyGradient.addColorStop(1, '#c0392b');
+                }
+                
+                ctx.fillStyle = bodyGradient;
                 ctx.fillRect(x - candleBodyWidth / 2, bodyTop, candleBodyWidth, bodyHeight);
                 
-                // Draw border
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 1;
+                // Draw border with glow effect
+                ctx.strokeStyle = isUp ? '#1abc9c' : '#e67e22';
+                ctx.lineWidth = 1.5;
                 ctx.strokeRect(x - candleBodyWidth / 2, bodyTop, candleBodyWidth, bodyHeight);
             }
             
-            // Draw current price line (blue vertical)
+            // Draw current price horizontal line (bright cyan)
             const lastPrice = history[history.length - 1];
             const lastY = height - padding - ((lastPrice - minPrice) / range) * (chartHeight - padding);
             
             ctx.strokeStyle = '#0099ff';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
+            ctx.setLineDash([3, 3]);
             ctx.beginPath();
-            ctx.moveTo(width - 20, lastY);
-            ctx.lineTo(width, lastY);
+            ctx.moveTo(0, lastY);
+            ctx.lineTo(width - 10, lastY);
             ctx.stroke();
+            ctx.setLineDash([]);
             
-            // Draw price label at bottom
-            ctx.fillStyle = '#00d4ff';
+            // Draw current price label with box
+            ctx.fillStyle = 'rgba(0, 212, 255, 0.9)';
+            ctx.fillRect(width - 160, lastY - 20, 150, 25);
+            
+            ctx.fillStyle = '#000';
             ctx.font = 'bold 14px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('Current: ₹' + lastPrice.toFixed(2), width / 2, height - 10);
+            ctx.fillText('Current: ₹' + lastPrice.toFixed(2), width - 85, lastY + 2);
             
-            // Draw support/resistance labels
-            ctx.fillStyle = '#FFD700';
+            // Draw time axis labels (every 10 candles)
+            ctx.fillStyle = '#999';
             ctx.font = '11px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText('Support: ₹' + support.toFixed(2), 10, supportY - 5);
+            ctx.textAlign = 'center';
+            for (let i = 0; i < history.length; i += Math.ceil(history.length / 5)) {
+                const x = padding + (i + 1) * candleWidth;
+                ctx.fillText(Math.floor((i / history.length) * 100) + '%', x, height - 20);
+            }
             
+            // Draw title info
             ctx.fillStyle = '#00d4ff';
-            ctx.fillText('Resistance: ₹' + resistance.toFixed(2), 10, resistanceY - 5);
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('Candlestick Chart • 50 Data Points', 20, 25);
         }
         
         function openTrading(symbol, price, change) {
             selectedCompany = { symbol, price, change };
+            const comp = companies.find(c => c.symbol === symbol);
             document.getElementById('modalTitle').textContent = `Trade ${symbol}`;
             document.getElementById('modalPrice').textContent = price.toFixed(2);
-            document.getElementById('modalChange').textContent = change.toFixed(1);
+            document.getElementById('modalChange').textContent = change.toFixed(2);
             document.getElementById('sharesInput').value = 1;
             setTradeType('buy');
             updateModalTotal();
@@ -1543,7 +1692,7 @@
             selectedCompany = { symbol, price: comp.price, change: comp.change };
             document.getElementById('modalTitle').textContent = `Sell ${symbol}`;
             document.getElementById('modalPrice').textContent = comp.price.toFixed(2);
-            document.getElementById('modalChange').textContent = comp.change.toFixed(1);
+            document.getElementById('modalChange').textContent = comp.change.toFixed(2);
             document.getElementById('sharesInput').value = 1;
             setTradeType('sell');
             updateModalTotal();
