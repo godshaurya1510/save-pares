@@ -29,6 +29,21 @@
             z-index: 1000;
         }
         
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 12px 15px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .navbar {
+                padding: 10px 10px;
+                gap: 5px;
+            }
+        }
+        
         .logo { font-size: 24px; font-weight: bold; color: #00d4ff; }
         
         .nav-links {
@@ -198,6 +213,18 @@
             margin-bottom: 40px;
         }
         
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
         .stat-card {
             background: rgba(0, 212, 255, 0.1);
             border: 2px solid #00d4ff;
@@ -225,6 +252,26 @@
             gap: 20px;
         }
         
+        @media (max-width: 1024px) {
+            .companies-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .companies-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .companies-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+        }
+        
         .company-card {
             background: rgba(255, 255, 255, 0.05);
             border: 2px solid rgba(0, 212, 255, 0.3);
@@ -238,6 +285,20 @@
             border-color: #00d4ff;
             transform: translateY(-5px);
             background: rgba(255, 255, 255, 0.08);
+        }
+        
+        @media (max-width: 768px) {
+            .company-card {
+                padding: 15px;
+                border-radius: 12px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .company-card {
+                padding: 12px;
+                border-radius: 10px;
+            }
         }
         
         .company-header {
@@ -347,6 +408,32 @@
             max-width: 500px;
             width: 90%;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .modal-content {
+                padding: 30px;
+                max-width: 90%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .modal-content {
+                padding: 20px;
+                max-width: 95%;
+                border-radius: 12px;
+            }
+        }
+        
+        #chartModal .modal-content {
+            max-width: 900px;
+        }
+        
+        @media (max-width: 768px) {
+            #chartModal .modal-content {
+                max-width: 95%;
+                padding: 20px;
+            }
         }
         
         .modal-header {
@@ -579,6 +666,14 @@
             width: 100% !important;
             height: 100% !important;
         }
+        
+        #chartModal {
+            z-index: 3000;
+        }
+        
+        #chartModal .modal-content {
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -626,6 +721,37 @@
     <div id="dashboardPage" class="page"></div>
     <div id="companiesPage" class="page"></div>
     <div id="portfolioPage" class="page"></div>
+    
+    <!-- BIG CHART MODAL -->
+    <div id="chartModal" class="modal">
+        <div class="modal-content" style="max-width: 900px; width: 95%;">
+            <div class="modal-header">
+                <div id="chartTitle" class="modal-title">Stock Price Chart</div>
+                <button class="close-btn" onclick="closeChartModal()">×</button>
+            </div>
+            <div style="position: relative; height: 400px; background: rgba(0, 212, 255, 0.05); border-radius: 15px; padding: 20px;">
+                <canvas id="bigChart" style="width: 100%; height: 100%;"></canvas>
+            </div>
+            <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; text-align: center;">
+                <div style="background: rgba(0, 212, 255, 0.1); padding: 15px; border-radius: 10px;">
+                    <div style="color: #999; font-size: 12px; margin-bottom: 5px;">CURRENT PRICE</div>
+                    <div style="color: #00d4ff; font-size: 20px; font-weight: bold;">₹<span id="chartCurrentPrice">0</span></div>
+                </div>
+                <div style="background: rgba(0, 212, 255, 0.1); padding: 15px; border-radius: 10px;">
+                    <div style="color: #999; font-size: 12px; margin-bottom: 5px;">HIGH (Today)</div>
+                    <div style="color: #2ecc71; font-size: 20px; font-weight: bold;">₹<span id="chartHigh">0</span></div>
+                </div>
+                <div style="background: rgba(0, 212, 255, 0.1); padding: 15px; border-radius: 10px;">
+                    <div style="color: #999; font-size: 12px; margin-bottom: 5px;">LOW (Today)</div>
+                    <div style="color: #e74c3c; font-size: 20px; font-weight: bold;">₹<span id="chartLow">0</span></div>
+                </div>
+                <div style="background: rgba(0, 212, 255, 0.1); padding: 15px; border-radius: 10px;">
+                    <div style="color: #999; font-size: 12px; margin-bottom: 5px;">CHANGE</div>
+                    <div id="chartChangeDisplay" style="color: #00d4ff; font-size: 20px; font-weight: bold;">+0%</div>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <div id="tradingModal" class="modal">
         <div class="modal-content">
@@ -676,6 +802,52 @@
         let tradeType = 'buy';
         let priceHistory = {}; // For charts
         let priceUpdateInterval = null; // For live updates
+        let apiUpdateInterval = null; // For API price updates
+        
+        // Fetch live prices from API
+        async function fetchLivePrices() {
+            try {
+                // Using yfinance API for NSE stocks
+                const symbols = companies.map(c => c.symbol + '.NS'); // Add .NS for NSE
+                
+                // Alternative: Using free stock API
+                const apiUrl = 'https://api.example.com/quote'; // Will use free APIs
+                
+                // For now, using alternative free API
+                for (let comp of companies) {
+                    try {
+                        // Using finnhub or similar free API
+                        const response = await fetch(
+                            `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${comp.symbol}.NS?modules=price`
+                        );
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result[0]) {
+                                const priceData = data.quoteSummary.result[0].price;
+                                const newPrice = priceData.regularMarketPrice?.raw || comp.price;
+                                const prevClose = priceData.regularMarketPreviousClose?.raw || comp.price;
+                                
+                                comp.price = newPrice;
+                                comp.change = ((newPrice - prevClose) / prevClose) * 100;
+                                
+                                // Track in history
+                                if (priceHistory[comp.symbol]) {
+                                    priceHistory[comp.symbol].push(newPrice);
+                                    if (priceHistory[comp.symbol].length > 50) {
+                                        priceHistory[comp.symbol].shift();
+                                    }
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        console.log(`Could not fetch price for ${comp.symbol}`);
+                    }
+                }
+            } catch (error) {
+                console.log('API Error - Using local prices');
+            }
+        }
         
         // Initialize price history for all companies
         function initPriceHistory() {
@@ -727,6 +899,11 @@
         // Start price updates every 3 seconds
         function startPriceUpdates() {
             if (!priceUpdateInterval) {
+                // Fetch live prices from API every 30 seconds
+                fetchLivePrices();
+                apiUpdateInterval = setInterval(fetchLivePrices, 30000); // Update every 30 seconds
+                
+                // Local price fluctuation every 3 seconds
                 priceUpdateInterval = setInterval(updatePrices, 3000);
             }
         }
@@ -736,6 +913,10 @@
             if (priceUpdateInterval) {
                 clearInterval(priceUpdateInterval);
                 priceUpdateInterval = null;
+            }
+            if (apiUpdateInterval) {
+                clearInterval(apiUpdateInterval);
+                apiUpdateInterval = null;
             }
         }
         
@@ -806,7 +987,7 @@
             { name: 'Britannia Inbustries', symbol: 'BRITANNIA', price: 5180, change: 1.9 },
             { name: 'ICICI Prubenttial', symbol: 'ICICIPRULI', price: 590, change: 1.4 },
             { name: 'HDFC Life Insurance', symbol: 'HDFCLIFE', price: 670, change: 0.9 },
-            { name: 'Tata Steel Limiteb', symbol: 'TATASTEEL', price: 155, change: 3.1 },
+            { name: 'Tata Steel Limiteb', symbol: 'TATASTEEL', price: 167.60, change: 3.1 },
             { name: 'Jindal Stainless', symbol: 'JINDALSTEL', price: 700, change: 2.2 },
             { name: 'Adani Ports & SEZ', symbol: 'ADANIPORTS', price: 1180, change: 2.3 },
             { name: 'Adani Enterprisez', symbol: 'ADANIENT', price: 2850, change: 1.8 },
@@ -1015,10 +1196,13 @@
                             <div class="footer-value" style="color: ${company.change >= 0 ? '#2ecc71' : '#e74c3c'};">${company.change >= 0 ? '+' : ''}${company.change.toFixed(1)}%</div>
                         </div>
                     </div>
-                    <div style="height: 60px; margin: 10px 0; position: relative; background: rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden;">
+                    <div style="height: 80px; margin: 10px 0; position: relative; background: rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden; cursor: pointer;" onclick="openBigChart('${company.symbol}')">
                         <canvas id="chart_${company.symbol}" style="width: 100%; height: 100%;"></canvas>
                     </div>
-                    <button class="invest-btn" onclick="openTrading('${company.symbol}', ${company.price}, ${company.change})">Trade</button>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <button class="invest-btn" onclick="openTrading('${company.symbol}', ${company.price}, ${company.change})">BUY</button>
+                        <button class="invest-btn" style="background: #e74c3c;" onclick="openTrading('${company.symbol}', ${company.price}, ${company.change}); setTradeType('sell');">SELL</button>
+                    </div>
                 </div>
             `;
         }
@@ -1057,6 +1241,101 @@
             ctx.lineTo(width, height);
             ctx.lineTo(0, height);
             ctx.fill();
+        }
+        
+        function openBigChart(symbol) {
+            const comp = companies.find(c => c.symbol === symbol);
+            if (!comp) return;
+            
+            document.getElementById('chartTitle').textContent = `${symbol} - ${comp.name}`;
+            document.getElementById('chartCurrentPrice').textContent = comp.price.toFixed(2);
+            
+            const history = priceHistory[symbol] || [];
+            const high = history.length > 0 ? Math.max(...history) : comp.price;
+            const low = history.length > 0 ? Math.min(...history) : comp.price;
+            
+            document.getElementById('chartHigh').textContent = high.toFixed(2);
+            document.getElementById('chartLow').textContent = low.toFixed(2);
+            
+            const changeDisplay = document.getElementById('chartChangeDisplay');
+            changeDisplay.textContent = (comp.change >= 0 ? '+' : '') + comp.change.toFixed(2) + '%';
+            changeDisplay.style.color = comp.change >= 0 ? '#2ecc71' : '#e74c3c';
+            
+            document.getElementById('chartModal').classList.add('active');
+            
+            // Draw big chart
+            setTimeout(() => drawBigChart(symbol), 100);
+        }
+        
+        function closeChartModal() {
+            document.getElementById('chartModal').classList.remove('active');
+        }
+        
+        function drawBigChart(symbol) {
+            const canvas = document.getElementById('bigChart');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const history = priceHistory[symbol] || [];
+            
+            if (history.length < 2) {
+                ctx.fillStyle = '#999';
+                ctx.font = '18px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Not enough data', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            const minPrice = Math.min(...history);
+            const maxPrice = Math.max(...history);
+            const range = maxPrice - minPrice || 1;
+            
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw grid lines
+            ctx.strokeStyle = 'rgba(0, 212, 255, 0.1)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 5; i++) {
+                const y = (i / 5) * height;
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+                ctx.stroke();
+            }
+            
+            // Draw price line
+            ctx.strokeStyle = '#00d4ff';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            
+            history.forEach((price, i) => {
+                const x = (i / (history.length - 1)) * width;
+                const y = height - ((price - minPrice) / range) * height;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            
+            ctx.stroke();
+            
+            // Fill area under chart
+            ctx.fillStyle = 'rgba(0, 212, 255, 0.3)';
+            ctx.lineTo(width, height);
+            ctx.lineTo(0, height);
+            ctx.fill();
+            
+            // Draw points
+            ctx.fillStyle = '#00d4ff';
+            history.forEach((price, i) => {
+                if (i % Math.ceil(history.length / 10) === 0 || i === history.length - 1) {
+                    const x = (i / (history.length - 1)) * width;
+                    const y = height - ((price - minPrice) / range) * height;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            });
         }
         
         function openTrading(symbol, price, change) {
