@@ -700,8 +700,14 @@
             <h1>📈 Save & Pares</h1>
             <p id="authSubtitle">Stock Market Simulator</p>
             
-            <div id="loginForm">
-                <p style="background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; text-align: center; margin-bottom: 20px;">Enter your name & password to login or create new account</p>
+            <!-- AUTH TOGGLE BUTTONS -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button id="loginTabBtn" class="btn-primary" style="background: #00d4ff; color: #000; border: none; padding: 10px 20px; flex: 1; border-radius: 8px; cursor: pointer; font-weight: 600;" onclick="switchAuthTab('login')">LOGIN</button>
+                <button id="signupTabBtn" class="btn-primary" style="background: #999; color: #fff; border: none; padding: 10px 20px; flex: 1; border-radius: 8px; cursor: pointer; font-weight: 600;" onclick="switchAuthTab('signup')">SIGN UP</button>
+            </div>
+            
+            <!-- LOGIN FORM -->
+            <div id="loginForm" style="display: block;">
                 <div class="form-group">
                     <label>Username</label>
                     <input type="text" id="loginName" placeholder="Enter your username">
@@ -710,9 +716,31 @@
                     <label>Password</label>
                     <input type="password" id="loginPassword" placeholder="Enter your password">
                 </div>
-                <button class="btn-primary" onclick="login()">Login / Create Account</button>
-                <div class="toggle-auth" style="margin-top: 15px; text-align: center;">
-                    <span style="color: #666; font-size: 12px;">First time? Create new account with your username & password</span>
+                <button class="btn-primary" onclick="loginUser()">LOGIN</button>
+                <div style="margin-top: 15px; text-align: center;">
+                    <span style="color: #666; font-size: 12px;">Don't have an account? Click SIGN UP above</span>
+                </div>
+            </div>
+            
+            <!-- SIGN UP FORM -->
+            <div id="signupForm" style="display: none;">
+                <div class="form-group">
+                    <label>Choose Username</label>
+                    <input type="text" id="signupName" placeholder="Enter a unique username">
+                    <div id="usernameError" style="color: #e74c3c; font-size: 12px; margin-top: 5px; display: none;"></div>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" placeholder="Enter your password">
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="signupConfirmPassword" placeholder="Confirm your password">
+                    <div id="passwordError" style="color: #e74c3c; font-size: 12px; margin-top: 5px; display: none;"></div>
+                </div>
+                <button class="btn-primary" onclick="signupUser()">CREATE ACCOUNT</button>
+                <div style="margin-top: 15px; text-align: center;">
+                    <span style="color: #666; font-size: 12px;">Already have an account? Click LOGIN above</span>
                 </div>
             </div>
         </div>
@@ -995,12 +1023,19 @@
             { name: 'Jio Telecom Inbiam', symbol: 'JIOTELECOM', price: 950, change: 1.8 },
         ];
         
-        function login() {
-            const username = document.getElementById('loginName').value;
+        function loginUser() {
+            const username = document.getElementById('loginName').value.trim();
             const password = document.getElementById('loginPassword').value;
             
             if (!username || !password) {
-                alert('Please enter both username and password');
+                alert('❌ Please enter both username and password');
+                return;
+            }
+            
+            // Check if account exists
+            const accountData = localStorage.getItem('saveAndParesAccount_' + username);
+            if (!accountData) {
+                alert('❌ Account not found! Please sign up first or check your username.');
                 return;
             }
             
@@ -1010,24 +1045,104 @@
                 document.getElementById('userCredits').textContent = user.credits.toFixed(0);
                 loginSuccess();
             } else {
-                // Create new account
-                if (loadAccount(username, password) === false && localStorage.getItem('saveAndParesAccount_' + username)) {
-                    // Account exists but wrong password
-                    return;
-                }
-                // New account
-                user = { 
-                    username: username, 
-                    password: password, 
-                    credits: 1000,
-                    createdDate: new Date().toISOString()
-                };
-                initPriceHistory();
-                saveAccount();
-                document.getElementById('userName').textContent = user.username;
-                document.getElementById('userCredits').textContent = user.credits.toFixed(0);
-                loginSuccess();
+                // Wrong password
+                alert('❌ Incorrect password! Please try again.');
             }
+        }
+        
+        function signupUser() {
+            const username = document.getElementById('signupName').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const confirmPassword = document.getElementById('signupConfirmPassword').value;
+            
+            // Reset error messages
+            document.getElementById('usernameError').style.display = 'none';
+            document.getElementById('passwordError').style.display = 'none';
+            
+            // Validation
+            if (!username || !password || !confirmPassword) {
+                alert('❌ Please fill in all fields');
+                return;
+            }
+            
+            // Check password match
+            if (password !== confirmPassword) {
+                document.getElementById('passwordError').textContent = 'Passwords do not match!';
+                document.getElementById('passwordError').style.display = 'block';
+                return;
+            }
+            
+            // Check password length
+            if (password.length < 4) {
+                document.getElementById('passwordError').textContent = 'Password must be at least 4 characters';
+                document.getElementById('passwordError').style.display = 'block';
+                return;
+            }
+            
+            // Check if username is taken
+            if (localStorage.getItem('saveAndParesAccount_' + username)) {
+                document.getElementById('usernameError').textContent = '❌ This username is already taken! Try another one.';
+                document.getElementById('usernameError').style.display = 'block';
+                return;
+            }
+            
+            // Check if username is valid (alphanumeric + underscore only)
+            if (!/^[a-zA-Z0-9_]{3,15}$/.test(username)) {
+                document.getElementById('usernameError').textContent = 'Username must be 3-15 characters (letters, numbers, underscore only)';
+                document.getElementById('usernameError').style.display = 'block';
+                return;
+            }
+            
+            // Create new account
+            user = { 
+                username: username, 
+                password: password, 
+                credits: 1000,
+                createdDate: new Date().toISOString()
+            };
+            
+            initPriceHistory();
+            saveAccount();
+            
+            alert('✅ Account created successfully! Welcome to Save & Pares!');
+            
+            document.getElementById('userName').textContent = user.username;
+            document.getElementById('userCredits').textContent = user.credits.toFixed(0);
+            loginSuccess();
+        }
+        
+        function switchAuthTab(tab) {
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const loginTabBtn = document.getElementById('loginTabBtn');
+            const signupTabBtn = document.getElementById('signupTabBtn');
+            
+            if (tab === 'login') {
+                loginForm.style.display = 'block';
+                signupForm.style.display = 'none';
+                loginTabBtn.style.background = '#00d4ff';
+                loginTabBtn.style.color = '#000';
+                signupTabBtn.style.background = '#999';
+                signupTabBtn.style.color = '#fff';
+                // Clear signup fields
+                document.getElementById('signupName').value = '';
+                document.getElementById('signupPassword').value = '';
+                document.getElementById('signupConfirmPassword').value = '';
+            } else {
+                loginForm.style.display = 'none';
+                signupForm.style.display = 'block';
+                loginTabBtn.style.background = '#999';
+                loginTabBtn.style.color = '#fff';
+                signupTabBtn.style.background = '#00d4ff';
+                signupTabBtn.style.color = '#000';
+                // Clear login fields
+                document.getElementById('loginName').value = '';
+                document.getElementById('loginPassword').value = '';
+            }
+        }
+        
+        function login() {
+            // This function is deprecated - use loginUser() or signupUser()
         }
         
         function loginSuccess() {
@@ -1291,51 +1406,124 @@
             const minPrice = Math.min(...history);
             const maxPrice = Math.max(...history);
             const range = maxPrice - minPrice || 1;
+            const padding = 40;
+            const chartHeight = height - padding;
             
             ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, width, height);
             
             // Draw grid lines
             ctx.strokeStyle = 'rgba(0, 212, 255, 0.1)';
             ctx.lineWidth = 1;
             for (let i = 0; i <= 5; i++) {
-                const y = (i / 5) * height;
+                const y = padding + (i / 5) * (chartHeight - padding);
                 ctx.beginPath();
                 ctx.moveTo(0, y);
                 ctx.lineTo(width, y);
                 ctx.stroke();
+                
+                // Price labels on right
+                const price = maxPrice - (i / 5) * range;
+                ctx.fillStyle = '#999';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'right';
+                ctx.fillText('₹' + price.toFixed(2), width - 10, y + 5);
             }
             
-            // Draw price line
-            ctx.strokeStyle = '#00d4ff';
-            ctx.lineWidth = 3;
+            // Calculate support and resistance
+            const support = minPrice + (range * 0.2);
+            const resistance = maxPrice - (range * 0.2);
+            const supportY = height - padding - ((support - minPrice) / range) * (chartHeight - padding);
+            const resistanceY = height - padding - ((resistance - minPrice) / range) * (chartHeight - padding);
+            
+            // Draw support line (yellow)
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
             ctx.beginPath();
+            ctx.moveTo(0, supportY);
+            ctx.lineTo(width, supportY);
+            ctx.stroke();
+            ctx.setLineDash([]);
             
-            history.forEach((price, i) => {
-                const x = (i / (history.length - 1)) * width;
-                const y = height - ((price - minPrice) / range) * height;
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            });
+            // Draw resistance line (cyan)
+            ctx.strokeStyle = '#00d4ff';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(0, resistanceY);
+            ctx.lineTo(width, resistanceY);
+            ctx.stroke();
+            ctx.setLineDash([]);
             
+            // Draw candlesticks
+            const candleWidth = (width - padding) / (history.length + 1);
+            const candleBodyWidth = candleWidth * 0.6;
+            
+            for (let i = 0; i < history.length; i++) {
+                const x = padding + (i + 1) * candleWidth;
+                const currentPrice = history[i];
+                const prevPrice = i > 0 ? history[i - 1] : currentPrice;
+                
+                // Candlestick Y positions
+                const highPrice = Math.max(currentPrice, prevPrice);
+                const lowPrice = Math.min(currentPrice, prevPrice);
+                
+                const highY = height - padding - ((highPrice - minPrice) / range) * (chartHeight - padding);
+                const lowY = height - padding - ((lowPrice - minPrice) / range) * (chartHeight - padding);
+                const openY = height - padding - ((prevPrice - minPrice) / range) * (chartHeight - padding);
+                const closeY = height - padding - ((currentPrice - minPrice) / range) * (chartHeight - padding);
+                
+                // Color: green if up, red if down
+                const isUp = currentPrice >= prevPrice;
+                const color = isUp ? '#2ecc71' : '#e74c3c';
+                
+                // Draw wick (high-low line)
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x, highY);
+                ctx.lineTo(x, lowY);
+                ctx.stroke();
+                
+                // Draw body
+                ctx.fillStyle = color;
+                const bodyTop = Math.min(openY, closeY);
+                const bodyHeight = Math.abs(closeY - openY) || 2;
+                ctx.fillRect(x - candleBodyWidth / 2, bodyTop, candleBodyWidth, bodyHeight);
+                
+                // Draw border
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x - candleBodyWidth / 2, bodyTop, candleBodyWidth, bodyHeight);
+            }
+            
+            // Draw current price line (blue vertical)
+            const lastPrice = history[history.length - 1];
+            const lastY = height - padding - ((lastPrice - minPrice) / range) * (chartHeight - padding);
+            
+            ctx.strokeStyle = '#0099ff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(width - 20, lastY);
+            ctx.lineTo(width, lastY);
             ctx.stroke();
             
-            // Fill area under chart
-            ctx.fillStyle = 'rgba(0, 212, 255, 0.3)';
-            ctx.lineTo(width, height);
-            ctx.lineTo(0, height);
-            ctx.fill();
-            
-            // Draw points
+            // Draw price label at bottom
             ctx.fillStyle = '#00d4ff';
-            history.forEach((price, i) => {
-                if (i % Math.ceil(history.length / 10) === 0 || i === history.length - 1) {
-                    const x = (i / (history.length - 1)) * width;
-                    const y = height - ((price - minPrice) / range) * height;
-                    ctx.beginPath();
-                    ctx.arc(x, y, 4, 0, 2 * Math.PI);
-                    ctx.fill();
-                }
-            });
+            ctx.font = 'bold 14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Current: ₹' + lastPrice.toFixed(2), width / 2, height - 10);
+            
+            // Draw support/resistance labels
+            ctx.fillStyle = '#FFD700';
+            ctx.font = '11px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('Support: ₹' + support.toFixed(2), 10, supportY - 5);
+            
+            ctx.fillStyle = '#00d4ff';
+            ctx.fillText('Resistance: ₹' + resistance.toFixed(2), 10, resistanceY - 5);
         }
         
         function openTrading(symbol, price, change) {
